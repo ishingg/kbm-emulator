@@ -5,45 +5,90 @@
 BleKeyboard Keyboard;
 BleMouse Mouse;
 
-//variable declaration 
-const int kbON = 33;
-const int mON = 32;
-const int LC = 26;
-const int RC = 25;
+//variable declaration
+bool mSwitch = false;
+int lastMouseState = LOW;
+const int range = 127;
+//digital pins  
+const int testpin = 2;
+const int kb = 25;
+const int mouse = 32;
+const int LC = 33;
+const int RC = 26;
+//analog pins, using ADC 1 
+const int LJx = 36;
+const int LJy = 39; 
+const int RJx = 34;
+const int RJy = 35;
+
 // put function declarations here:
 int readAxis(int thisAxis);
 void osKB();
-void mouseOn();
+void mouseOn(int pin);
 
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(2, OUTPUT);
+  pinMode(testpin, OUTPUT);
+  pinMode(LC, INPUT);
+  pinMode(RC, INPUT);
+  pinMode(kb, INPUT);
+  pinMode(mouse, INPUT);
+  Mouse.begin();
+  mSwitch = false;
 }
-
+// put your main code here, to run repeatedly:
 void loop() {
-  // put your main code here, to run repeatedly:
-  digitalWrite(2, HIGH);
-  delay(500);
-  digitalWrite(2, LOW);
-  delay(500);
+  //this enables and disables mouse input 
+  mouseOn(mouse);
+
+
+  if(mSwitch){
+    //mouse left click 
+    if(digitalRead(LC) == HIGH){
+      if(!Mouse.isPressed()){
+        Mouse.press();
+      }
+    } else {
+      Mouse.release();
+    }
+    //mouse right click
+    if(digitalRead(RC) == HIGH){
+      if(!Mouse.isPressed(MOUSE_RIGHT)){
+        Mouse.press(MOUSE_RIGHT);
+      }
+    } else {
+      Mouse.release(MOUSE_RIGHT);
+    }
+    
+    
+
+    
+    //mouseX = readAxis(RJx);
+    //mouseY = readAxis(RJy);
+  }  
+
+
+  if(digitalRead(kb) == HIGH){
+    osKB();
+  }
 }
 
 // put function definitions here:
 
-void mouseOn(){
-  Serial.println("MC CLICKED");
-  if(mON){
-    Serial.println("Mouse off");
-    mON = false;
-      
-  } else {
-    mON = true;
-      Serial.println("mouse on");
-      
+void mouseOn(int pin){
+  int mouseState = digitalRead(pin);
+  if (mouseState != lastMouseState) {
+    if (mouseState == HIGH) {
+      mSwitch = !mSwitch;
+      // turn on LED to indicate mouse state:
+      digitalWrite(testpin, mSwitch);
+    }
   }
-  delay(500);
+  lastMouseState = mouseState;
 }
+
+//macro that enables and disables on screen keyboard 
 void osKB(){
   Serial.println("OKB TRIG");
   Keyboard.begin();
@@ -55,6 +100,8 @@ void osKB(){
   // Release all keys
   Keyboard.releaseAll();
 }
+/*
+//reads joystick analog into mouse movement distance
 int readAxis(int thisAxis) {
   // read the analog input:
   int reading = analogRead(thisAxis);
@@ -72,3 +119,4 @@ int readAxis(int thisAxis) {
   // return the distance for this axis:
   return distance;
 }
+  */
